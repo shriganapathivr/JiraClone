@@ -1,21 +1,43 @@
 import mongoose from 'mongoose';
 import Message from '../models/Message.js';
 import User from '../models/User.js';
+import Project from '../models/Project.js';
 import ApiError from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const PUBLIC = 'name email avatar role';
 
-// Permission rule: members may only message an admin (the project head);
-// admins may message anyone. Returns the recipient doc or throws.
+// Set of user ids (as strings) that share at least one project with `userId` —
+// i.e. the teammates this user is allowed to chat with. Excludes the user.
+export async function sharedProjectUserIds(userId) {
+  const projects = await Project.find({
+    $or: [{ owner: userId }, { members: userId }],
+  }).select('owner members');
+  const ids = new Set();
+  for (const p of projects) {
+    ids.add(String(p.owner));
+    p.members.forEach((m) => ids.add(String(m)));
+  }
+  ids.delete(String(userId));
+  return ids;
+}
+
+// Permission rule: admins may message anyone (and anyone may message an admin);
+// members may also message teammates who share a project with them.
 export async function assertCanMessage(sender, recipientId) {
   if (String(sender._id) === String(recipientId)) {
     throw new ApiError(400, 'You cannot message yourself');
   }
   const recipient = await User.findById(recipientId).select(PUBLIC);
   if (!recipient) throw new ApiError(404, 'Recipient not found');
-  if (sender.role !== 'admin' && recipient.role !== 'admin') {
-    throw new ApiError(403, 'You can only chat with the project head');
+
+  // The project head is always reachable, in either direction.
+  if (sender.role === 'admin' || recipient.role === 'admin') return recipient;
+
+  // Otherwise both must belong to a common project.
+  const teammates = await sharedProjectUserIds(sender._id);
+  if (!teammates.has(String(recipientId))) {
+    throw new ApiError(403, 'You can only chat with the project head or teammates in your projects');
   }
   return recipient;
 }
@@ -36,10 +58,20 @@ export async function persistMessage(sender, recipientId, body) {
 // last message + unread count for each.
 export const getContacts = asyncHandler(async (req, res) => {
   const me = req.user;
-  const people =
-    me.role === 'admin'
-      ? await User.find({ _id: { $ne: me._id } }).select(PUBLIC).sort('name')
-      : await User.find({ role: 'admin' }).select(PUBLIC).sort('name');
+  let people;
+  if (me.role === 'admin') {
+    // The project head can reach everyone.
+    people = await User.find({ _id: { $ne: me._id } }).select(PUBLIC).sort('name');
+  } else {
+    // Members see the project head(s) plus teammates from their projects.
+    const teammates = await sharedProjectUserIds(me._id);
+    people = await User.find({
+      _id: { $ne: me._id },
+      $or: [{ role: 'admin' }, { _id: { $in: [...teammates] } }],
+    })
+      .select(PUBLIC)
+      .sort('name');
+  }
 
   const contacts = await Promise.all(
     people.map(async (u) => {

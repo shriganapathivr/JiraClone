@@ -75,7 +75,7 @@ function ContactList({ contacts, online, onPick, isAdmin }) {
     <>
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <h3 className="font-display text-base font-semibold">Messages</h3>
-        <span className="text-xs text-faint">{isAdmin ? 'Your team' : 'Project head'}</span>
+        <span className="text-xs text-faint">{isAdmin ? 'Your team' : 'Project head & teammates'}</span>
       </div>
       <div className="flex-1 overflow-y-auto">
         {contacts.length === 0 ? (
