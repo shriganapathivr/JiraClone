@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 export default function Modal({ open, onClose, title, children, maxWidth = 'max-w-lg' }) {
   useEffect(() => {
@@ -11,10 +12,20 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
-  return (
+  // Lock background scroll while a modal is open.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [open]);
+
+  // Render into document.body so the fixed overlay can't be trapped by an
+  // ancestor with transform/backdrop-filter (e.g. the blurred top bar).
+  return createPortal(
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:items-center">
+        <div className="fixed inset-0 z-[70] flex items-start justify-center overflow-y-auto p-4 sm:items-center">
           <motion.div
             className="fixed inset-0 bg-ink/40 backdrop-blur-sm"
             initial={{ opacity: 0 }}
@@ -39,6 +50,7 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
