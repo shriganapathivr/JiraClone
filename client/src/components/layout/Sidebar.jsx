@@ -21,7 +21,7 @@ export default function Sidebar() {
         <div className="grid h-9 w-9 place-items-center rounded-lg bg-accent font-display text-lg font-bold text-accent-ink">
           Z
         </div>
-        <span className="font-display text-lg font-bold tracking-tight">ZiraClone</span>
+        <span className="font-brand text-2xl leading-none">ZiraClone</span>
       </Link>
 
       <div className="px-3">

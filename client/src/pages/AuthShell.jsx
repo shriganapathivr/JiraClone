@@ -22,7 +22,7 @@ export default function AuthShell({ children }) {
             <div className="grid h-9 w-9 place-items-center rounded-lg bg-white/10 font-display text-lg font-bold">
               Z
             </div>
-            <span className="font-display text-xl font-bold tracking-tight">ZiraClone</span>
+            <span className="font-brand text-2xl leading-none">ZiraClone</span>
           </motion.div>
 
           <div>
