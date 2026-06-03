@@ -1,0 +1,19 @@
+{
+  "name": "ziraclone",
+  "version": "1.0.0",
+  "description": "ZiraClone — a beautiful Jira clone for project management and issue tracking (MERN).",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n \"server,client\" -c \"magenta,cyan\" \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "build": "npm install --prefix client && npm run build --prefix client",
+    "start": "npm start --prefix server",
+    "seed": "npm run seed --prefix server",
+    "install:all": "npm install && npm install --prefix server && npm install --prefix client"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

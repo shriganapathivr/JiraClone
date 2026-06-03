@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---- Theme tokens ---------------------------------------------------- */
+:root {
+  /* Light — soft paper white with deep ink and electric violet accent */
+  --canvas: 245 246 250;
+  --surface: 255 255 255;
+  --elevated: 255 255 255;
+  --border: 226 228 237;
+  --ink: 22 24 42;
+  --muted: 96 100 124;
+  --faint: 142 146 168;
+  --accent: 91 61 245;       /* electric violet */
+  --accent-soft: 237 233 255;
+  --accent-ink: 255 255 255;
+}
+
+.dark {
+  /* Dark — midnight indigo with luminous violet accent */
+  --canvas: 13 14 24;
+  --surface: 21 23 38;
+  --elevated: 28 31 51;
+  --border: 42 45 71;
+  --ink: 233 235 248;
+  --muted: 158 162 190;
+  --faint: 110 114 142;
+  --accent: 139 109 255;
+  --accent-soft: 44 38 84;
+  --accent-ink: 18 18 30;
+}
+
+* {
+  border-color: rgb(var(--border));
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-canvas text-ink font-sans antialiased;
+  /* Smooth the theme switch across the whole app. */
+  transition: background-color 0.4s ease, color 0.4s ease;
+  font-feature-settings: 'ss01', 'cv01';
+}
+
+/* Subtle textured backdrop for depth. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(60rem 40rem at 80% -10%, rgb(var(--accent) / 0.10), transparent 60%),
+    radial-gradient(50rem 40rem at -10% 110%, rgb(var(--accent) / 0.07), transparent 55%);
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--border));
+  border-radius: 999px;
+  border: 2px solid rgb(var(--canvas));
+}
+::-webkit-scrollbar-thumb:hover { background: rgb(var(--faint)); }
+
+/* ---- Component layer ------------------------------------------------- */
+@layer components {
+  .card {
+    @apply bg-surface border border-border rounded-xl shadow-card;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold
+           transition-colors disabled:opacity-50 disabled:cursor-not-allowed select-none;
+  }
+  .btn-primary {
+    @apply btn bg-accent text-accent-ink hover:brightness-110 shadow-sm;
+  }
+  .btn-ghost {
+    @apply btn text-muted hover:text-ink hover:bg-elevated;
+  }
+  .btn-outline {
+    @apply btn border border-border text-ink hover:bg-elevated;
+  }
+  .input {
+    @apply w-full rounded-lg bg-canvas border border-border px-3 py-2 text-sm text-ink
+           placeholder:text-faint outline-none transition
+           focus:border-accent focus:ring-2 focus:ring-accent/30;
+  }
+  .label {
+    @apply block text-xs font-semibold uppercase tracking-wide text-muted mb-1.5;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+}
+
+/* Markdown rendering inside issue descriptions/comments. */
+.prose-zira { @apply text-sm leading-relaxed text-ink; }
+.prose-zira h1, .prose-zira h2, .prose-zira h3 { @apply font-display font-semibold mt-4 mb-2; }
+.prose-zira h1 { @apply text-lg; }
+.prose-zira h2 { @apply text-base; }
+.prose-zira p { @apply my-2; }
+.prose-zira ul { @apply list-disc pl-5 my-2 space-y-1; }
+.prose-zira ol { @apply list-decimal pl-5 my-2 space-y-1; }
+.prose-zira code { @apply font-mono text-[0.8em] bg-elevated px-1.5 py-0.5 rounded; }
+.prose-zira pre { @apply bg-elevated rounded-lg p-3 my-3 overflow-x-auto; }
+.prose-zira pre code { @apply bg-transparent p-0; }
+.prose-zira a { @apply text-accent underline underline-offset-2; }
+.prose-zira blockquote { @apply border-l-2 border-accent pl-3 italic text-muted my-2; }

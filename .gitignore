@@ -1,0 +1,10 @@
+node_modules/
+client/dist/
+.env
+*.log
+.DS_Store
+dist/
+coverage/
+
+# Local Claude Code config
+.claude/
