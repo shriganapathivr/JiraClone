@@ -19,6 +19,7 @@ export const useChatStore = create((set, get) => ({
   unread: 0,
   typingFrom: null,
   connected: false,
+  projectId: null, // chat is scoped to the currently selected project
 
   // Wire up the socket + all real-time listeners (called once after login).
   connect() {
@@ -57,8 +58,16 @@ export const useChatStore = create((set, get) => ({
     });
 
     set({ connected: true });
-    get().loadContacts();
     get().refreshUnread();
+    // Contacts are loaded by the widget once it knows the current project.
+  },
+
+  // Switch the chat to a project's team; resets an open conversation if the
+  // other person isn't part of the new project.
+  setProject(projectId) {
+    if (projectId === get().projectId) return;
+    set({ projectId });
+    get().loadContacts(projectId);
   },
 
   teardown() {
@@ -73,10 +82,15 @@ export const useChatStore = create((set, get) => ({
     set({ connected: false, contacts: [], messages: [], activeUserId: null, unread: 0, online: new Set() });
   },
 
-  async loadContacts() {
+  async loadContacts(projectId = get().projectId) {
     try {
-      const { data } = await api.get('/messages/contacts');
-      set({ contacts: data });
+      const { data } = await api.get('/messages/contacts', {
+        params: projectId ? { project: projectId } : {},
+      });
+      // If the open conversation's person isn't in this project, close it.
+      const active = get().activeUserId;
+      const stillThere = !active || data.some((c) => c.user._id === active);
+      set({ contacts: data, ...(stillThere ? {} : { activeUserId: null, messages: [] }) });
     } catch { /* ignore */ }
   },
 

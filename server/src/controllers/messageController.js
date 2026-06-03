@@ -54,23 +54,32 @@ export async function persistMessage(sender, recipientId, body) {
   ]);
 }
 
-// GET /api/messages/contacts — who the current user can chat with, plus
-// last message + unread count for each.
+// GET /api/messages/contacts?project=<id> — who the current user can chat with
+// within a given project (its owner + members), plus last message + unread.
+// Chat is scoped to one project at a time so switching projects switches teams.
 export const getContacts = asyncHandler(async (req, res) => {
   const me = req.user;
-  let people;
-  if (me.role === 'admin') {
-    // The project head can reach everyone.
+  const { project } = req.query;
+  let people = [];
+
+  if (project) {
+    const proj = await Project.findById(project).select('owner members');
+    const belongs =
+      proj &&
+      (me.role === 'admin' ||
+        String(proj.owner) === String(me._id) ||
+        proj.members.some((m) => String(m) === String(me._id)));
+    if (belongs) {
+      const ids = new Set([String(proj.owner), ...proj.members.map(String)]);
+      ids.delete(String(me._id));
+      people = await User.find({ _id: { $in: [...ids] } }).select(PUBLIC).sort('name');
+    }
+  } else if (me.role === 'admin') {
+    // No project context (e.g. project list) — admin can still reach everyone.
     people = await User.find({ _id: { $ne: me._id } }).select(PUBLIC).sort('name');
   } else {
-    // Members see the project head(s) plus teammates from their projects.
-    const teammates = await sharedProjectUserIds(me._id);
-    people = await User.find({
-      _id: { $ne: me._id },
-      $or: [{ role: 'admin' }, { _id: { $in: [...teammates] } }],
-    })
-      .select(PUBLIC)
-      .sort('name');
+    // Members with no project context see only the project head(s).
+    people = await User.find({ role: 'admin', _id: { $ne: me._id } }).select(PUBLIC).sort('name');
   }
 
   const contacts = await Promise.all(

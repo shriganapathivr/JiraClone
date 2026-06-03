@@ -4,12 +4,14 @@ import { MessageCircle, X, ArrowLeft, Send, ShieldCheck } from 'lucide-react';
 import Avatar from '../ui/Avatar.jsx';
 import { useChatStore } from '../../store/chatStore.js';
 import { useAuthStore } from '../../store/authStore.js';
+import { useProjectStore } from '../../store/projectStore.js';
 import { timeAgo } from '../../lib/format.js';
 
 export default function ChatWidget() {
   const user = useAuthStore((s) => s.user);
+  const project = useProjectStore((s) => s.current);
   const {
-    open, openPanel, closePanel, connect, teardown,
+    open, openPanel, closePanel, connect, teardown, setProject,
     contacts, online, activeUserId, openConversation, unread,
   } = useChatStore();
 
@@ -19,6 +21,11 @@ export default function ChatWidget() {
     return () => teardown();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Scope the chat to whichever project is currently open.
+  useEffect(() => {
+    setProject(project?._id || null);
+  }, [project?._id, setProject]);
 
   const activeContact = contacts.find((c) => c.user._id === activeUserId);
 
@@ -60,7 +67,7 @@ export default function ChatWidget() {
                 contacts={contacts}
                 online={online}
                 onPick={openConversation}
-                isAdmin={user?.role === 'admin'}
+                projectName={project?.name}
               />
             )}
           </motion.div>
@@ -70,16 +77,22 @@ export default function ChatWidget() {
   );
 }
 
-function ContactList({ contacts, online, onPick, isAdmin }) {
+function ContactList({ contacts, online, onPick, projectName }) {
   return (
     <>
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+      <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
         <h3 className="font-display text-base font-semibold">Messages</h3>
-        <span className="text-xs text-faint">{isAdmin ? 'Your team' : 'Project head & teammates'}</span>
+        <span className="truncate text-xs text-faint" title={projectName || ''}>
+          {projectName ? `${projectName} team` : 'Open a project'}
+        </span>
       </div>
       <div className="flex-1 overflow-y-auto">
         {contacts.length === 0 ? (
-          <p className="px-4 py-10 text-center text-sm text-faint">No one to chat with yet.</p>
+          <p className="px-4 py-10 text-center text-sm text-faint">
+            {projectName
+              ? 'No teammates in this project yet.'
+              : 'Open a project to chat with its team.'}
+          </p>
         ) : (
           contacts.map(({ user: u, lastMessage, unread }) => (
             <button
