@@ -7,6 +7,7 @@ A beautiful, full-stack **Jira clone** for project management and issue tracking
 ## ✨ Features
 
 - **Authentication & roles** — JWT auth (HTTP-only cookie + token fallback), bcrypt-hashed passwords, auto-generated DiceBear avatars. Two roles: **admin (project head)** and **member**.
+- **Profile management** — every user can edit their username and upload a profile picture (cropped + compressed client-side to a small thumbnail) or reset back to auto-generated initials, from the top-bar avatar menu.
 - **Real-time chat** — members can message the project head (and vice-versa) in real time over **Socket.io**, with live delivery, online presence dots, typing indicators, and unread badges — no page refresh.
 - **Projects** — create / edit / delete projects with a name, key (e.g. `ZIRA`), description, and members. Issues auto-number per project (`ZIRA-1`, `ZIRA-2`, …).
 - **Issues** — title, markdown description, type (Story / Task / Bug / Epic), status, priority, assignee, reporter, story points, labels, and a comment thread.
@@ -160,7 +161,7 @@ ZIRAclone/
 
 All routes are under `/api` and (except auth) require a valid JWT.
 
-- `POST /api/auth/register` · `POST /api/auth/login` · `POST /api/auth/logout` · `GET /api/auth/me`
+- `POST /api/auth/register` · `POST /api/auth/login` · `POST /api/auth/logout` · `GET /api/auth/me` · `PUT /api/auth/me` (update username/avatar)
 - `GET/POST /api/projects` · `GET/PUT/DELETE /api/projects/:id`
 - `GET/POST /api/issues` · `GET/PUT/DELETE /api/issues/:id` · `PATCH /api/issues/reorder`
 - `GET/POST /api/sprints` · `PUT/DELETE /api/sprints/:id` · `POST /api/sprints/:id/start` · `POST /api/sprints/:id/complete`

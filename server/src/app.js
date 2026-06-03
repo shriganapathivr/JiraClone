@@ -26,7 +26,7 @@ export function createApp() {
       credentials: true,
     })
   );
-  app.use(express.json());
+  app.use(express.json({ limit: '5mb' })); // allow base64 avatar uploads
   app.use(cookieParser());
   if (env.NODE_ENV === 'development') app.use(morgan('dev'));
 

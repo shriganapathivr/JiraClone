@@ -28,6 +28,13 @@ export const useAuthStore = create((set) => ({
     return data.user;
   },
 
+  // Update the current user's profile (username + avatar).
+  async updateProfile(fields) {
+    const { data } = await api.put('/auth/me', fields);
+    set({ user: data.user });
+    return data.user;
+  },
+
   async logout() {
     try {
       await api.post('/auth/logout');

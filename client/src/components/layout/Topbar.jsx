@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { LogOut, ChevronDown } from 'lucide-react';
+import { LogOut, ChevronDown, UserCog } from 'lucide-react';
 import ThemeToggle from '../ThemeToggle.jsx';
 import Avatar from '../ui/Avatar.jsx';
+import ProfileModal from '../profile/ProfileModal.jsx';
 import { useAuthStore } from '../../store/authStore.js';
 import { toast } from '../../store/toastStore.js';
 
@@ -11,6 +12,7 @@ export default function Topbar({ title, children }) {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const ref = useRef(null);
 
   useEffect(() => {
@@ -59,6 +61,12 @@ export default function Topbar({ title, children }) {
                 </div>
                 <div className="my-1 h-px bg-border" />
                 <button
+                  onClick={() => { setProfileOpen(true); setOpen(false); }}
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium text-muted hover:bg-elevated hover:text-ink"
+                >
+                  <UserCog size={16} /> Edit profile
+                </button>
+                <button
                   onClick={onLogout}
                   className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium text-muted hover:bg-elevated hover:text-ink"
                 >
@@ -69,6 +77,8 @@ export default function Topbar({ title, children }) {
           </AnimatePresence>
         </div>
       </div>
+
+      <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
     </header>
   );
 }

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { body } from 'express-validator';
-import { register, login, logout, me } from '../controllers/authController.js';
+import { register, login, logout, me, updateMe } from '../controllers/authController.js';
 import { validate } from '../middleware/validate.js';
 import { protect } from '../middleware/auth.js';
 
@@ -29,5 +29,12 @@ router.post(
 
 router.post('/logout', logout);
 router.get('/me', protect, me);
+router.put(
+  '/me',
+  protect,
+  [body('name').optional().trim().notEmpty().withMessage('Name cannot be empty')],
+  validate,
+  updateMe
+);
 
 export default router;

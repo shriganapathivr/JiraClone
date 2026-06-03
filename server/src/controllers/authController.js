@@ -48,3 +48,31 @@ export const logout = asyncHandler(async (req, res) => {
 export const me = asyncHandler(async (req, res) => {
   res.json({ user: publicUser(req.user) });
 });
+
+function initialsAvatar(name) {
+  const seed = encodeURIComponent(name);
+  return `https://api.dicebear.com/7.x/initials/svg?seed=${seed}&backgroundType=gradientLinear`;
+}
+
+// PUT /api/auth/me — update the current user's profile (username + avatar).
+export const updateMe = asyncHandler(async (req, res) => {
+  const { name, avatar } = req.body;
+  const user = await User.findById(req.user._id);
+  if (!user) throw new ApiError(404, 'User not found');
+
+  if (name !== undefined) {
+    if (!name.trim()) throw new ApiError(400, 'Name cannot be empty');
+    user.name = name.trim();
+  }
+
+  if (avatar !== undefined) {
+    // An empty avatar resets to the auto-generated initials picture.
+    user.avatar = avatar ? avatar : initialsAvatar(user.name);
+  } else if (name !== undefined && user.avatar?.includes('dicebear')) {
+    // Keep the auto initials avatar in sync when the name changes.
+    user.avatar = initialsAvatar(user.name);
+  }
+
+  await user.save();
+  res.json({ user: publicUser(user) });
+});
