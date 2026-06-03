@@ -8,7 +8,7 @@ export default {
         display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
         sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
-        brand: ['"Pacifico"', 'cursive'], // ZiraClone wordmark
+        brand: ['"Unbounded"', '"Space Grotesk"', 'sans-serif'], // Zira wordmark
       },
       colors: {
         // Theme-aware tokens driven by CSS variables (see index.css).
