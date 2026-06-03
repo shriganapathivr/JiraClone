@@ -13,6 +13,7 @@ import issueRoutes from './routes/issueRoutes.js';
 import sprintRoutes from './routes/sprintRoutes.js';
 import commentRoutes from './routes/commentRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import messageRoutes from './routes/messageRoutes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -39,6 +40,7 @@ export function createApp() {
   app.use('/api/sprints', sprintRoutes);
   app.use('/api/comments', commentRoutes);
   app.use('/api/users', userRoutes);
+  app.use('/api/messages', messageRoutes);
 
   // In production, serve the built React client and fall back to index.html.
   if (env.NODE_ENV === 'production') {

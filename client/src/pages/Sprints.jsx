@@ -12,6 +12,7 @@ import { TypeIcon, PriorityIcon, StatusChip } from '../components/issues/Badges.
 import Avatar from '../components/ui/Avatar.jsx';
 import { useProjectData } from '../hooks/useProjectData.js';
 import { useProjectStore } from '../store/projectStore.js';
+import { useAuthStore } from '../store/authStore.js';
 import { toast } from '../store/toastStore.js';
 import { formatDate } from '../lib/format.js';
 import api from '../lib/api.js';
@@ -25,6 +26,7 @@ const STATUS_STYLE = {
 export default function Sprints() {
   const { loaded } = useProjectData();
   const { sprints, issues, current, refreshSprints, refreshIssues } = useProjectStore();
+  const isAdmin = useAuthStore((s) => s.user?.role === 'admin');
   const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [busy, setBusy] = useState(null);
@@ -70,9 +72,11 @@ export default function Sprints() {
   return (
     <>
       <Topbar title="Sprints">
-        <button className="btn-primary" onClick={() => setOpen(true)}>
-          <Plus size={16} /> New sprint
-        </button>
+        {isAdmin && (
+          <button className="btn-primary" onClick={() => setOpen(true)}>
+            <Plus size={16} /> New sprint
+          </button>
+        )}
       </Topbar>
 
       <PageTransition className="space-y-4 p-6">
@@ -83,7 +87,7 @@ export default function Sprints() {
             icon={Rocket}
             title="No sprints yet"
             description="Plan a sprint, fill it with issues from the backlog, then start it to drive your board."
-            action={<button className="btn-primary" onClick={() => setOpen(true)}><Plus size={16} /> Create sprint</button>}
+            action={isAdmin ? <button className="btn-primary" onClick={() => setOpen(true)}><Plus size={16} /> Create sprint</button> : null}
           />
         ) : (
           <motion.div
@@ -118,21 +122,23 @@ export default function Sprints() {
                         {formatDate(sprint.startDate)} → {formatDate(sprint.endDate)} · {list.length} issues
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {sprint.status === 'planned' && (
-                        <button className="btn-primary" disabled={busy === sprint._id + 'start'} onClick={() => action(sprint._id, 'start')}>
-                          {busy === sprint._id + 'start' ? <Spinner size={15} /> : <><Play size={15} /> Start</>}
+                    {isAdmin && (
+                      <div className="flex items-center gap-2">
+                        {sprint.status === 'planned' && (
+                          <button className="btn-primary" disabled={busy === sprint._id + 'start'} onClick={() => action(sprint._id, 'start')}>
+                            {busy === sprint._id + 'start' ? <Spinner size={15} /> : <><Play size={15} /> Start</>}
+                          </button>
+                        )}
+                        {sprint.status === 'active' && (
+                          <button className="btn-outline" disabled={busy === sprint._id + 'complete'} onClick={() => action(sprint._id, 'complete')}>
+                            {busy === sprint._id + 'complete' ? <Spinner size={15} /> : <><CheckCircle2 size={15} /> Complete</>}
+                          </button>
+                        )}
+                        <button className="btn-ghost h-9 w-9 rounded-lg p-0 hover:text-red-500" onClick={() => onDelete(sprint._id)}>
+                          <Trash2 size={16} />
                         </button>
-                      )}
-                      {sprint.status === 'active' && (
-                        <button className="btn-outline" disabled={busy === sprint._id + 'complete'} onClick={() => action(sprint._id, 'complete')}>
-                          {busy === sprint._id + 'complete' ? <Spinner size={15} /> : <><CheckCircle2 size={15} /> Complete</>}
-                        </button>
-                      )}
-                      <button className="btn-ghost h-9 w-9 rounded-lg p-0 hover:text-red-500" onClick={() => onDelete(sprint._id)}>
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Progress */}

@@ -26,6 +26,7 @@ export default function Projects() {
   const navigate = useNavigate();
   const { projects, loadProjects } = useProjectStore();
   const user = useAuthStore((s) => s.user);
+  const isAdmin = user?.role === 'admin';
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
 
@@ -48,9 +49,11 @@ export default function Projects() {
   return (
     <>
       <Topbar title="Projects">
-        <button className="btn-primary" onClick={() => setOpen(true)}>
-          <Plus size={16} /> New project
-        </button>
+        {isAdmin && (
+          <button className="btn-primary" onClick={() => setOpen(true)}>
+            <Plus size={16} /> New project
+          </button>
+        )}
       </Topbar>
 
       <PageTransition className="p-6">
@@ -62,8 +65,10 @@ export default function Projects() {
           <EmptyState
             icon={FolderKanban}
             title="No projects yet"
-            description="Create your first project to start tracking issues, planning sprints, and shipping work."
-            action={<button className="btn-primary" onClick={() => setOpen(true)}><Plus size={16} /> Create project</button>}
+            description={isAdmin
+              ? 'Create your first project to start tracking issues, planning sprints, and shipping work.'
+              : 'You have not been added to any projects yet. The project head will assign you to one.'}
+            action={isAdmin ? <button className="btn-primary" onClick={() => setOpen(true)}><Plus size={16} /> Create project</button> : null}
           />
         ) : (
           <motion.div
@@ -92,7 +97,7 @@ export default function Projects() {
                     <h3 className="truncate font-display text-base font-semibold">{p.name}</h3>
                     <p className="text-xs font-medium text-faint">{p.key}</p>
                   </div>
-                  {p.owner?._id === user?._id && (
+                  {isAdmin && (
                     <span
                       onClick={(e) => onDelete(e, p)}
                       className="rounded-md p-1.5 text-faint opacity-0 transition hover:bg-elevated hover:text-red-500 group-hover:opacity-100"

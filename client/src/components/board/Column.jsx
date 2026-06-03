@@ -5,7 +5,7 @@ import { Plus } from 'lucide-react';
 import SortableIssueCard from './SortableIssueCard.jsx';
 import { STATUS_META } from '../../lib/constants.js';
 
-export default function Column({ status, issues, onCardClick, onAdd }) {
+export default function Column({ status, issues, onCardClick, onAdd, canAdd = true }) {
   const meta = STATUS_META[status];
   const { setNodeRef, isOver } = useDroppable({ id: status, data: { status } });
 
@@ -19,9 +19,11 @@ export default function Column({ status, issues, onCardClick, onAdd }) {
             {issues.length}
           </span>
         </div>
-        <button onClick={() => onAdd(status)} className="rounded-md p-1 text-faint hover:bg-elevated hover:text-accent" title={`Add issue to ${status}`}>
-          <Plus size={16} />
-        </button>
+        {canAdd && (
+          <button onClick={() => onAdd(status)} className="rounded-md p-1 text-faint hover:bg-elevated hover:text-accent" title={`Add issue to ${status}`}>
+            <Plus size={16} />
+          </button>
+        )}
       </div>
 
       <motion.div
@@ -39,12 +41,18 @@ export default function Column({ status, issues, onCardClick, onAdd }) {
         </SortableContext>
 
         {issues.length === 0 && (
-          <button
-            onClick={() => onAdd(status)}
-            className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-border py-6 text-xs text-faint hover:border-accent hover:text-accent"
-          >
-            Drop or create an issue
-          </button>
+          canAdd ? (
+            <button
+              onClick={() => onAdd(status)}
+              className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-border py-6 text-xs text-faint hover:border-accent hover:text-accent"
+            >
+              Drop or create an issue
+            </button>
+          ) : (
+            <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-border py-6 text-xs text-faint">
+              Drop issues here
+            </div>
+          )
         )}
       </motion.div>
     </div>

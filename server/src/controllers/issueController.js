@@ -68,23 +68,47 @@ export const createIssue = asyncHandler(async (req, res) => {
     reporter: req.body.reporter || req.user._id,
     order,
   });
+
+  // Assigning to someone makes them a project member so they can see the work.
+  if (issue.assignee) await ensureMember(projectId, issue.assignee);
+
   const populated = await issue.populate(POPULATE);
   res.status(201).json(populated);
 });
+
+// Adds a user to a project's member list if not already present.
+async function ensureMember(projectId, userId) {
+  await Project.findByIdAndUpdate(projectId, { $addToSet: { members: userId } });
+}
 
 // PUT /api/issues/:id
 export const updateIssue = asyncHandler(async (req, res) => {
   const issue = await Issue.findById(req.params.id);
   if (!issue) throw new ApiError(404, 'Issue not found');
 
-  const editable = [
-    'title', 'description', 'type', 'status', 'priority',
-    'assignee', 'storyPoints', 'labels', 'sprint', 'order',
-  ];
+  // Admins edit everything; members may only move cards (status & order).
+  const isAdmin = req.user.role === 'admin';
+  const editable = isAdmin
+    ? ['title', 'description', 'type', 'status', 'priority', 'assignee', 'storyPoints', 'labels', 'sprint', 'order']
+    : ['status', 'order'];
+
+  // Block members from sneaking restricted fields past the allow-list.
+  if (!isAdmin) {
+    const blocked = Object.keys(req.body).filter(
+      (k) => !editable.includes(k) && req.body[k] !== undefined
+    );
+    if (blocked.length) {
+      throw new ApiError(403, 'Only the project head can change those fields');
+    }
+  }
+
   for (const field of editable) {
     if (req.body[field] !== undefined) issue[field] = req.body[field];
   }
   await issue.save();
+
+  if (isAdmin && issue.assignee) await ensureMember(issue.project, issue.assignee);
+
   const populated = await issue.populate(POPULATE);
   res.json(populated);
 });

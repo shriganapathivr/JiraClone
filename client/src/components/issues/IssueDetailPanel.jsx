@@ -16,6 +16,7 @@ import api from '../../lib/api.js';
 export default function IssueDetailPanel({ issueId, open, onClose }) {
   const { current, upsertIssue, removeIssue } = useProjectStore();
   const user = useAuthStore((s) => s.user);
+  const isAdmin = user?.role === 'admin';
   const members = current?.members || [];
 
   const [issue, setIssue] = useState(null);
@@ -131,9 +132,11 @@ export default function IssueDetailPanel({ issueId, open, onClose }) {
                     <span className="font-mono text-sm font-semibold text-muted">{issue.key}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <button onClick={onDelete} className="btn-ghost h-8 w-8 rounded-lg p-0 hover:text-red-500" title="Delete issue">
-                      <Trash2 size={16} />
-                    </button>
+                    {isAdmin && (
+                      <button onClick={onDelete} className="btn-ghost h-8 w-8 rounded-lg p-0 hover:text-red-500" title="Delete issue">
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                     <button onClick={onClose} className="btn-ghost h-8 w-8 rounded-lg p-0">
                       <X size={18} />
                     </button>
@@ -142,7 +145,9 @@ export default function IssueDetailPanel({ issueId, open, onClose }) {
 
                 <div className="flex-1 space-y-6 overflow-y-auto px-5 py-5">
                   {/* Title */}
-                  {editingTitle ? (
+                  {!isAdmin ? (
+                    <h2 className="font-display text-xl font-bold leading-snug">{issue.title}</h2>
+                  ) : editingTitle ? (
                     <div className="flex items-start gap-2">
                       <textarea
                         autoFocus
@@ -172,20 +177,20 @@ export default function IssueDetailPanel({ issueId, open, onClose }) {
                       </select>
                     </Field>
                     <Field label="Assignee">
-                      <select className="input" value={issue.assignee?._id || ''} onChange={(e) => onField('assignee', e.target.value || null)}>
+                      <select className="input disabled:opacity-70" disabled={!isAdmin} value={issue.assignee?._id || ''} onChange={(e) => onField('assignee', e.target.value || null)}>
                         <option value="">Unassigned</option>
                         {members.map((m) => <option key={m._id} value={m._id}>{m.name}</option>)}
                       </select>
                     </Field>
                     <Field label="Type">
-                      <select className="input" value={issue.type} onChange={(e) => onField('type', e.target.value)}>
+                      <select className="input disabled:opacity-70" disabled={!isAdmin} value={issue.type} onChange={(e) => onField('type', e.target.value)}>
                         {ISSUE_TYPES.map((t) => <option key={t}>{t}</option>)}
                       </select>
                     </Field>
                     <Field label="Priority">
                       <div className="flex items-center gap-2">
                         <PriorityIcon priority={issue.priority} />
-                        <select className="input" value={issue.priority} onChange={(e) => onField('priority', e.target.value)}>
+                        <select className="input disabled:opacity-70" disabled={!isAdmin} value={issue.priority} onChange={(e) => onField('priority', e.target.value)}>
                           {PRIORITIES.map((p) => <option key={p}>{p}</option>)}
                         </select>
                       </div>
@@ -194,7 +199,8 @@ export default function IssueDetailPanel({ issueId, open, onClose }) {
                       <input
                         type="number"
                         min="0"
-                        className="input"
+                        className="input disabled:opacity-70"
+                        disabled={!isAdmin}
                         defaultValue={issue.storyPoints ?? ''}
                         onBlur={(e) => onField('storyPoints', e.target.value ? Number(e.target.value) : null)}
                         placeholder="—"
@@ -221,7 +227,7 @@ export default function IssueDetailPanel({ issueId, open, onClose }) {
                   <div>
                     <div className="mb-1.5 flex items-center justify-between">
                       <span className="label mb-0">Description</span>
-                      {!editingDesc && (
+                      {isAdmin && !editingDesc && (
                         <button className="text-xs font-semibold text-accent hover:underline" onClick={() => setEditingDesc(true)}>
                           Edit
                         </button>

@@ -6,6 +6,7 @@ import Project from './models/Project.js';
 import Issue from './models/Issue.js';
 import Sprint from './models/Sprint.js';
 import Comment from './models/Comment.js';
+import Message from './models/Message.js';
 
 const TYPES = ['Story', 'Task', 'Bug', 'Epic'];
 const STATUSES = ['To Do', 'In Progress', 'In Review', 'Done'];
@@ -39,10 +40,13 @@ async function seed() {
     Issue.deleteMany({}),
     Sprint.deleteMany({}),
     Comment.deleteMany({}),
+    Message.deleteMany({}),
   ]);
 
   console.log('Creating users...');
   // Use create() so the pre-save hook hashes passwords + builds avatars.
+  // The admin is the project head — full control over projects/issues/sprints.
+  const admin = await User.create({ name: 'Admin', email: 'admin@gmail.com', password: 'Shri@2006', role: 'admin' });
   const alice = await User.create({ name: 'Alice Rivera', email: 'alice@zira.dev', password: 'password123' });
   const bob = await User.create({ name: 'Bob Chen', email: 'bob@zira.dev', password: 'password123' });
   const carol = await User.create({ name: 'Carol Nwosu', email: 'carol@zira.dev', password: 'password123' });
@@ -53,8 +57,8 @@ async function seed() {
     name: 'ZiraClone Demo',
     key: 'ZIRA',
     description: 'A demo project showcasing the ZiraClone issue tracker. Drag issues across the board, open the detail panel, and explore the dashboard.',
-    owner: alice._id,
-    members: users.map((u) => u._id),
+    owner: admin._id,
+    members: [admin._id, ...users.map((u) => u._id)],
   });
 
   console.log('Creating active sprint...');
@@ -106,8 +110,16 @@ async function seed() {
     { body: 'I can reproduce this on iOS Safari 17 as well.', author: carol._id, issue: createdIssues[3]._id },
   ]);
 
+  console.log('Adding sample chat messages...');
+  await Message.create([
+    { sender: bob._id, recipient: admin._id, body: 'Hi! Should I pick up the Kanban drag-and-drop task next?', read: true },
+    { sender: admin._id, recipient: bob._id, body: 'Yes please — I just assigned ZIRA-3 to you. Ping me if blocked!', read: true },
+    { sender: carol._id, recipient: admin._id, body: 'The Safari avatar bug is reproducible on iOS 17 too.' },
+  ]);
+
   console.log('\n\x1b[32m✓ Seed complete!\x1b[0m');
-  console.log('  Login with: \x1b[1malice@zira.dev\x1b[0m / \x1b[1mpassword123\x1b[0m');
+  console.log('  \x1b[1mAdmin (project head):\x1b[0m admin@gmail.com / Shri@2006  — full control');
+  console.log('  \x1b[1mMembers:\x1b[0m alice@zira.dev / bob@zira.dev / carol@zira.dev — password123');
   console.log(`  Project: ${project.name} (${project.key}) — ${createdIssues.length} issues, 1 active sprint.\n`);
 
   await mongoose.connection.close();

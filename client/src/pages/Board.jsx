@@ -21,12 +21,14 @@ import { CardSkeleton } from '../components/ui/Skeleton.jsx';
 import { STATUSES } from '../lib/constants.js';
 import { useProjectData } from '../hooks/useProjectData.js';
 import { useProjectStore } from '../store/projectStore.js';
+import { useAuthStore } from '../store/authStore.js';
 import { toast } from '../store/toastStore.js';
 import api from '../lib/api.js';
 
 export default function Board() {
   const { loaded } = useProjectData();
   const { issues, sprints, setIssues } = useProjectStore();
+  const isAdmin = useAuthStore((s) => s.user?.role === 'admin');
   const [filters, setFilters] = useState({});
   const [activeId, setActiveId] = useState(null);
   const [createStatus, setCreateStatus] = useState(null);
@@ -115,9 +117,11 @@ export default function Board() {
   return (
     <>
       <Topbar title="Board">
-        <button className="btn-primary" onClick={() => setCreateStatus('To Do')}>
-          <Plus size={16} /> Create
-        </button>
+        {isAdmin && (
+          <button className="btn-primary" onClick={() => setCreateStatus('To Do')}>
+            <Plus size={16} /> Create
+          </button>
+        )}
       </Topbar>
 
       <PageTransition className="flex flex-col p-6">
@@ -147,8 +151,10 @@ export default function Board() {
               <EmptyState
                 icon={Rocket}
                 title="Your board is empty"
-                description="Create an issue or start a sprint from the Sprints tab to populate the board."
-                action={<button className="btn-primary" onClick={() => setCreateStatus('To Do')}><Plus size={16} /> Create issue</button>}
+                description={isAdmin
+                  ? 'Create an issue or start a sprint from the Sprints tab to populate the board.'
+                  : 'No issues here yet. The project head will assign work to you.'}
+                action={isAdmin ? <button className="btn-primary" onClick={() => setCreateStatus('To Do')}><Plus size={16} /> Create issue</button> : null}
               />
             ) : (
               <DndContext
@@ -166,6 +172,7 @@ export default function Board() {
                       issues={columns[status]}
                       onCardClick={setSelectedId}
                       onAdd={setCreateStatus}
+                      canAdd={isAdmin}
                     />
                   ))}
                 </div>

@@ -4,11 +4,13 @@ import Sprint from '../models/Sprint.js';
 import ApiError from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
-// GET /api/projects — projects the user owns or is a member of.
+// GET /api/projects — admin sees every project; members see their own.
 export const getProjects = asyncHandler(async (req, res) => {
-  const projects = await Project.find({
-    $or: [{ owner: req.user._id }, { members: req.user._id }],
-  })
+  const scope =
+    req.user.role === 'admin'
+      ? {}
+      : { $or: [{ owner: req.user._id }, { members: req.user._id }] };
+  const projects = await Project.find(scope)
     .populate('owner', 'name email avatar')
     .populate('members', 'name email avatar')
     .sort('-createdAt');

@@ -10,6 +10,6 @@ export const getUsers = asyncHandler(async (req, res) => {
       { email: { $regex: req.query.search, $options: 'i' } },
     ];
   }
-  const users = await User.find(filter).select('name email avatar').sort('name').limit(50);
+  const users = await User.find(filter).select('name email avatar role').sort('name').limit(50);
   res.json(users);
 });

@@ -6,7 +6,8 @@ A beautiful, full-stack **Jira clone** for project management and issue tracking
 
 ## ✨ Features
 
-- **Authentication** — JWT auth (HTTP-only cookie + token fallback), bcrypt-hashed passwords, auto-generated DiceBear avatars.
+- **Authentication & roles** — JWT auth (HTTP-only cookie + token fallback), bcrypt-hashed passwords, auto-generated DiceBear avatars. Two roles: **admin (project head)** and **member**.
+- **Real-time chat** — members can message the project head (and vice-versa) in real time over **Socket.io**, with live delivery, online presence dots, typing indicators, and unread badges — no page refresh.
 - **Projects** — create / edit / delete projects with a name, key (e.g. `ZIRA`), description, and members. Issues auto-number per project (`ZIRA-1`, `ZIRA-2`, …).
 - **Issues** — title, markdown description, type (Story / Task / Bug / Epic), status, priority, assignee, reporter, story points, labels, and a comment thread.
 - **Kanban board** — columns by status with fluid `@dnd-kit` drag-and-drop. Cards animate on drag, drop, and reorder; status & order persist to the backend.
@@ -19,8 +20,8 @@ A beautiful, full-stack **Jira clone** for project management and issue tracking
 
 ## 🧱 Tech
 
-**Frontend:** React + Vite, React Router, Tailwind CSS, Zustand, Framer Motion, @dnd-kit, Recharts, Axios, lucide-react.
-**Backend:** Node + Express, Mongoose, JWT, bcryptjs, express-validator.
+**Frontend:** React + Vite, React Router, Tailwind CSS, Zustand, Framer Motion, @dnd-kit, Recharts, Axios, lucide-react, socket.io-client.
+**Backend:** Node + Express, Mongoose, JWT, bcryptjs, express-validator, Socket.io.
 
 ## 📋 Prerequisites
 
@@ -63,7 +64,21 @@ npm run seed
 
 This creates 3 users, the **ZiraClone Demo** project (key `ZIRA`), ~16 issues across every status/type/priority, and one **active sprint**.
 
-**Demo login:** `alice@zira.dev` / `password123` (also `bob@zira.dev`, `carol@zira.dev`).
+**Logins:**
+
+| Role | Email | Password | Can do |
+| --- | --- | --- | --- |
+| **Admin (project head)** | `admin@gmail.com` | `Shri@2006` | Everything — create/edit/delete projects, issues & sprints; assign work to anyone; chat with any member. |
+| Member | `alice@zira.dev` | `password123` | Move their cards across the board (change status), comment, and chat with the project head. Cannot create or assign work. |
+| Member | `bob@zira.dev` | `password123` | (same as above) |
+| Member | `carol@zira.dev` | `password123` | (same as above) |
+
+## 🔐 Roles & permissions
+
+ZiraClone has a simple two-tier model:
+
+- **Admin / project head** (`admin@gmail.com`) — full control. Creates and edits projects, issues, and sprints; assigns issues to any user; can chat with everyone. Sees **all** projects and **all** users (including newly registered ones, so they can be assigned work immediately — assigning a user automatically adds them to the project).
+- **Members** — work-focused. They can move their cards across the Kanban board (status changes), reorder, comment, and chat with the project head. They **cannot** create/assign/delete issues, create projects, or manage sprints. The UI hides those controls and the API enforces it (returns `403`).
 
 ### 4. Run in development
 
@@ -151,6 +166,9 @@ All routes are under `/api` and (except auth) require a valid JWT.
 - `GET/POST /api/sprints` · `PUT/DELETE /api/sprints/:id` · `POST /api/sprints/:id/start` · `POST /api/sprints/:id/complete`
 - `GET/POST /api/comments` · `DELETE /api/comments/:id`
 - `GET /api/users`
+- `GET /api/messages/contacts` · `GET /api/messages/:userId` · `POST /api/messages` · `GET /api/messages/unread/count`
+
+**Real-time (Socket.io):** authenticates via the JWT on the handshake, then emits/listens for `message:send` / `message:new`, `typing`, `message:read`, and `presence:update`. In dev, Vite proxies `/socket.io` to the API server; in production it's same-origin.
 
 ## License
 

@@ -18,12 +18,14 @@ import EmptyState from '../components/ui/EmptyState.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
 import { useProjectData } from '../hooks/useProjectData.js';
 import { useProjectStore } from '../store/projectStore.js';
+import { useAuthStore } from '../store/authStore.js';
 import { toast } from '../store/toastStore.js';
 import api from '../lib/api.js';
 
 export default function Backlog() {
   const { loaded } = useProjectData();
   const { issues, sprints, setIssues, upsertIssue } = useProjectStore();
+  const isAdmin = useAuthStore((s) => s.user?.role === 'admin');
   const [filters, setFilters] = useState({});
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
@@ -70,9 +72,11 @@ export default function Backlog() {
   return (
     <>
       <Topbar title="Backlog">
-        <button className="btn-primary" onClick={() => setCreateOpen(true)}>
-          <Plus size={16} /> Create
-        </button>
+        {isAdmin && (
+          <button className="btn-primary" onClick={() => setCreateOpen(true)}>
+            <Plus size={16} /> Create
+          </button>
+        )}
       </Topbar>
 
       <PageTransition className="p-6">
@@ -86,8 +90,8 @@ export default function Backlog() {
           <EmptyState
             icon={ListOrdered}
             title="Backlog is empty"
-            description="Issues without a sprint live here. Create one or move issues back from a sprint."
-            action={<button className="btn-primary" onClick={() => setCreateOpen(true)}><Plus size={16} /> Create issue</button>}
+            description="Issues without a sprint live here."
+            action={isAdmin ? <button className="btn-primary" onClick={() => setCreateOpen(true)}><Plus size={16} /> Create issue</button> : null}
           />
         ) : (
           <div className="card overflow-hidden">
@@ -105,6 +109,7 @@ export default function Backlog() {
                       key={issue._id}
                       issue={issue}
                       sprints={sprints}
+                      canManage={isAdmin}
                       onClick={() => setSelectedId(issue._id)}
                       onMoveToSprint={onMoveToSprint}
                     />

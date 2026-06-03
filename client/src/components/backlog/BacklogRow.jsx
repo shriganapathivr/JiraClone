@@ -4,7 +4,7 @@ import { GripVertical } from 'lucide-react';
 import Avatar from '../ui/Avatar.jsx';
 import { TypeIcon, PriorityIcon, StatusChip } from '../issues/Badges.jsx';
 
-export default function BacklogRow({ issue, onClick, sprints, onMoveToSprint }) {
+export default function BacklogRow({ issue, onClick, sprints, onMoveToSprint, canManage = true }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: issue._id,
     data: { issue },
@@ -32,18 +32,20 @@ export default function BacklogRow({ issue, onClick, sprints, onMoveToSprint }) 
           {issue.storyPoints}
         </span>
       )}
-      <select
-        value={issue.sprint?._id || issue.sprint || ''}
-        onChange={(e) => onMoveToSprint(issue, e.target.value || null)}
-        onClick={(e) => e.stopPropagation()}
-        className="input h-8 w-auto py-0 text-xs"
-        title="Move to sprint"
-      >
-        <option value="">Backlog</option>
-        {sprints.filter((s) => s.status !== 'completed').map((s) => (
-          <option key={s._id} value={s._id}>{s.name}</option>
-        ))}
-      </select>
+      {canManage && (
+        <select
+          value={issue.sprint?._id || issue.sprint || ''}
+          onChange={(e) => onMoveToSprint(issue, e.target.value || null)}
+          onClick={(e) => e.stopPropagation()}
+          className="input h-8 w-auto py-0 text-xs"
+          title="Move to sprint"
+        >
+          <option value="">Backlog</option>
+          {sprints.filter((s) => s.status !== 'completed').map((s) => (
+            <option key={s._id} value={s._id}>{s.name}</option>
+          ))}
+        </select>
+      )}
       <Avatar user={issue.assignee} size="sm" />
     </div>
   );

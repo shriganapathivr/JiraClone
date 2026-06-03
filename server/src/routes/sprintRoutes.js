@@ -9,12 +9,15 @@ import {
   deleteSprint,
 } from '../controllers/sprintController.js';
 import { protect } from '../middleware/auth.js';
+import { adminOnly } from '../middleware/admin.js';
 import { validate } from '../middleware/validate.js';
 
 const router = Router();
 router.use(protect);
 
+// Sprint planning is project-head territory — admin only for all mutations.
 router.route('/').get(getSprints).post(
+  adminOnly,
   [
     body('name').trim().notEmpty().withMessage('Sprint name is required'),
     body('project').notEmpty().withMessage('Project is required'),
@@ -23,8 +26,8 @@ router.route('/').get(getSprints).post(
   createSprint
 );
 
-router.post('/:id/start', startSprint);
-router.post('/:id/complete', completeSprint);
-router.route('/:id').put(updateSprint).delete(deleteSprint);
+router.post('/:id/start', adminOnly, startSprint);
+router.post('/:id/complete', adminOnly, completeSprint);
+router.route('/:id').put(adminOnly, updateSprint).delete(adminOnly, deleteSprint);
 
 export default router;

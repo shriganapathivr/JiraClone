@@ -8,12 +8,14 @@ import {
   deleteProject,
 } from '../controllers/projectController.js';
 import { protect } from '../middleware/auth.js';
+import { adminOnly } from '../middleware/admin.js';
 import { validate } from '../middleware/validate.js';
 
 const router = Router();
 router.use(protect);
 
 router.route('/').get(getProjects).post(
+  adminOnly,
   [
     body('name').trim().notEmpty().withMessage('Project name is required'),
     body('key')
@@ -25,6 +27,6 @@ router.route('/').get(getProjects).post(
   createProject
 );
 
-router.route('/:id').get(getProject).put(updateProject).delete(deleteProject);
+router.route('/:id').get(getProject).put(adminOnly, updateProject).delete(adminOnly, deleteProject);
 
 export default router;
