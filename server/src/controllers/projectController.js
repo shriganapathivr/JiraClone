@@ -13,6 +13,7 @@ export const getProjects = asyncHandler(async (req, res) => {
   const projects = await Project.find(scope)
     .populate('owner', 'name email avatar')
     .populate('members', 'name email avatar')
+    .populate('managers', 'name email avatar')
     .sort('-createdAt');
   res.json(projects);
 });
@@ -21,7 +22,8 @@ export const getProjects = asyncHandler(async (req, res) => {
 export const getProject = asyncHandler(async (req, res) => {
   const project = await Project.findById(req.params.id)
     .populate('owner', 'name email avatar')
-    .populate('members', 'name email avatar');
+    .populate('members', 'name email avatar')
+    .populate('managers', 'name email avatar');
   if (!project) throw new ApiError(404, 'Project not found');
   res.json(project);
 });
@@ -39,6 +41,7 @@ export const createProject = asyncHandler(async (req, res) => {
   const populated = await project.populate([
     { path: 'owner', select: 'name email avatar' },
     { path: 'members', select: 'name email avatar' },
+    { path: 'managers', select: 'name email avatar' },
   ]);
   res.status(201).json(populated);
 });
@@ -51,16 +54,28 @@ export const updateProject = asyncHandler(async (req, res) => {
     throw new ApiError(403, 'Only the project owner can edit this project');
   }
 
-  const { name, description, members } = req.body;
+  const { name, description, members, managers } = req.body;
   if (name !== undefined) project.name = name;
   if (description !== undefined) project.description = description;
   if (members !== undefined) {
     project.members = Array.from(new Set([project.owner.toString(), ...members]));
   }
+  if (managers !== undefined) {
+    // Managers must be members and exclude the owner (who is already admin).
+    const memberIds = new Set(project.members.map((m) => m.toString()));
+    project.managers = [...new Set(managers.map(String))].filter(
+      (id) => memberIds.has(id) && id !== project.owner.toString()
+    );
+  }
+  // Dropping a member also drops their manager rights.
+  project.managers = project.managers.filter((id) =>
+    project.members.some((m) => m.toString() === id.toString())
+  );
   await project.save();
   const populated = await project.populate([
     { path: 'owner', select: 'name email avatar' },
     { path: 'members', select: 'name email avatar' },
+    { path: 'managers', select: 'name email avatar' },
   ]);
   res.json(populated);
 });

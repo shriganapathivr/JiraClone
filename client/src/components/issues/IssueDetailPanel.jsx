@@ -9,6 +9,7 @@ import { TypeIcon, PriorityIcon } from './Badges.jsx';
 import { ISSUE_TYPES, STATUSES, PRIORITIES } from '../../lib/constants.js';
 import { useProjectStore } from '../../store/projectStore.js';
 import { useAuthStore } from '../../store/authStore.js';
+import { usePermissions } from '../../hooks/usePermissions.js';
 import { toast } from '../../store/toastStore.js';
 import { timeAgo } from '../../lib/format.js';
 import api from '../../lib/api.js';
@@ -16,7 +17,7 @@ import api from '../../lib/api.js';
 export default function IssueDetailPanel({ issueId, open, onClose }) {
   const { current, upsertIssue, removeIssue } = useProjectStore();
   const user = useAuthStore((s) => s.user);
-  const isAdmin = user?.role === 'admin';
+  const { canManageIssues: isAdmin } = usePermissions();
   const members = current?.members || [];
 
   const [issue, setIssue] = useState(null);

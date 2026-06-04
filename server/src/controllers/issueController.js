@@ -11,6 +11,13 @@ const POPULATE = [
   { path: 'sprint', select: 'name status' },
 ];
 
+// Who can create/assign/edit/delete issues in a project: the admin (project
+// head) or a member the admin has granted manager rights to on that project.
+function canManageIssues(user, project) {
+  if (user.role === 'admin') return true;
+  return (project.managers || []).some((m) => String(m) === String(user._id));
+}
+
 // GET /api/issues?project=&status=&type=&priority=&assignee=&sprint=&search=
 export const getIssues = asyncHandler(async (req, res) => {
   const { project, status, type, priority, assignee, sprint, search } = req.query;
@@ -44,6 +51,9 @@ export const createIssue = asyncHandler(async (req, res) => {
   const { project: projectId } = req.body;
   const project = await Project.findById(projectId);
   if (!project) throw new ApiError(404, 'Project not found');
+  if (!canManageIssues(req.user, project)) {
+    throw new ApiError(403, 'You do not have permission to create issues in this project');
+  }
 
   // Atomically increment the per-project counter.
   const updated = await Project.findByIdAndUpdate(
@@ -86,19 +96,20 @@ export const updateIssue = asyncHandler(async (req, res) => {
   const issue = await Issue.findById(req.params.id);
   if (!issue) throw new ApiError(404, 'Issue not found');
 
-  // Admins edit everything; members may only move cards (status & order).
-  const isAdmin = req.user.role === 'admin';
-  const editable = isAdmin
+  // Managers/admins edit everything; plain members may only move cards.
+  const project = await Project.findById(issue.project);
+  const canManage = project && canManageIssues(req.user, project);
+  const editable = canManage
     ? ['title', 'description', 'type', 'status', 'priority', 'assignee', 'storyPoints', 'labels', 'sprint', 'order']
     : ['status', 'order'];
 
   // Block members from sneaking restricted fields past the allow-list.
-  if (!isAdmin) {
+  if (!canManage) {
     const blocked = Object.keys(req.body).filter(
       (k) => !editable.includes(k) && req.body[k] !== undefined
     );
     if (blocked.length) {
-      throw new ApiError(403, 'Only the project head can change those fields');
+      throw new ApiError(403, 'You can only move this issue between columns');
     }
   }
 
@@ -107,7 +118,7 @@ export const updateIssue = asyncHandler(async (req, res) => {
   }
   await issue.save();
 
-  if (isAdmin && issue.assignee) await ensureMember(issue.project, issue.assignee);
+  if (canManage && issue.assignee) await ensureMember(issue.project, issue.assignee);
 
   const populated = await issue.populate(POPULATE);
   res.json(populated);
@@ -139,6 +150,10 @@ export const reorderIssues = asyncHandler(async (req, res) => {
 export const deleteIssue = asyncHandler(async (req, res) => {
   const issue = await Issue.findById(req.params.id);
   if (!issue) throw new ApiError(404, 'Issue not found');
+  const project = await Project.findById(issue.project);
+  if (!project || !canManageIssues(req.user, project)) {
+    throw new ApiError(403, 'You do not have permission to delete this issue');
+  }
   await Comment.deleteMany({ issue: issue._id });
   await issue.deleteOne();
   res.json({ message: 'Issue deleted' });

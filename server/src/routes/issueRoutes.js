@@ -9,7 +9,6 @@ import {
   deleteIssue,
 } from '../controllers/issueController.js';
 import { protect } from '../middleware/auth.js';
-import { adminOnly } from '../middleware/admin.js';
 import { validate } from '../middleware/validate.js';
 
 const router = Router();
@@ -18,8 +17,9 @@ router.use(protect);
 // Board/backlog drag-and-drop — members may reorder & change status.
 router.patch('/reorder', reorderIssues);
 
+// Issue create/delete permission (admin or project manager) is enforced in
+// the controller, which has the project context needed to check it.
 router.route('/').get(getIssues).post(
-  adminOnly,
   [
     body('title').trim().notEmpty().withMessage('Title is required'),
     body('project').notEmpty().withMessage('Project is required'),
@@ -28,7 +28,7 @@ router.route('/').get(getIssues).post(
   createIssue
 );
 
-// updateIssue allows members to change status/order only (enforced in controller).
-router.route('/:id').get(getIssue).put(updateIssue).delete(adminOnly, deleteIssue);
+// updateIssue allows plain members to change status/order only (enforced in controller).
+router.route('/:id').get(getIssue).put(updateIssue).delete(deleteIssue);
 
 export default router;

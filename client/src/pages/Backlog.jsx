@@ -18,14 +18,14 @@ import EmptyState from '../components/ui/EmptyState.jsx';
 import Skeleton from '../components/ui/Skeleton.jsx';
 import { useProjectData } from '../hooks/useProjectData.js';
 import { useProjectStore } from '../store/projectStore.js';
-import { useAuthStore } from '../store/authStore.js';
+import { usePermissions } from '../hooks/usePermissions.js';
 import { toast } from '../store/toastStore.js';
 import api from '../lib/api.js';
 
 export default function Backlog() {
   const { loaded } = useProjectData();
   const { issues, sprints, setIssues, upsertIssue } = useProjectStore();
-  const isAdmin = useAuthStore((s) => s.user?.role === 'admin');
+  const { canManageIssues: isAdmin } = usePermissions();
   const [filters, setFilters] = useState({});
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);

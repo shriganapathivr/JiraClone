@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Save, Trash2, UserPlus, X } from 'lucide-react';
+import { Save, Trash2, UserPlus, X, Ticket } from 'lucide-react';
 import Topbar from '../components/layout/Topbar.jsx';
 import PageTransition from '../components/layout/PageTransition.jsx';
 import Spinner from '../components/ui/Spinner.jsx';
@@ -19,6 +19,7 @@ export default function ProjectSettings() {
   const user = useAuthStore((s) => s.user);
   const [form, setForm] = useState({ name: '', description: '' });
   const [members, setMembers] = useState([]);
+  const [managers, setManagers] = useState([]); // ids of members who can create tickets
   const [allUsers, setAllUsers] = useState([]);
   const [saving, setSaving] = useState(false);
 
@@ -28,6 +29,7 @@ export default function ProjectSettings() {
     if (current) {
       setForm({ name: current.name, description: current.description || '' });
       setMembers(current.members || []);
+      setManagers((current.managers || []).map((m) => m._id || m));
     }
   }, [current]);
 
@@ -43,6 +45,7 @@ export default function ProjectSettings() {
         name: form.name,
         description: form.description,
         members: members.map((m) => m._id),
+        managers,
       });
       await Promise.all([selectProject(current._id), loadProjects()]);
       toast.success('Project saved');
@@ -61,6 +64,13 @@ export default function ProjectSettings() {
   function removeMember(id) {
     if (id === current.owner._id) return; // owner stays
     setMembers(members.filter((m) => m._id !== id));
+    setManagers(managers.filter((mid) => mid !== id)); // drop manager rights too
+  }
+
+  function toggleManager(id) {
+    setManagers((prev) =>
+      prev.includes(id) ? prev.filter((mid) => mid !== id) : [...prev, id]
+    );
   }
 
   async function onDelete() {
@@ -127,9 +137,30 @@ export default function ProjectSettings() {
                 </div>
                 {m._id === current.owner._id ? (
                   <span className="chip bg-accent-soft text-accent">Owner</span>
-                ) : isOwner ? (
-                  <button onClick={() => removeMember(m._id)} className="text-faint hover:text-red-500"><X size={16} /></button>
-                ) : null}
+                ) : (
+                  <div className="flex items-center gap-2">
+                    {isOwner ? (
+                      <button
+                        type="button"
+                        onClick={() => toggleManager(m._id)}
+                        title="Allow this member to create & assign tickets"
+                        className={`chip transition-colors ${
+                          managers.includes(m._id)
+                            ? 'bg-accent-soft text-accent'
+                            : 'border border-border text-faint hover:text-ink'
+                        }`}
+                      >
+                        <Ticket size={12} />
+                        {managers.includes(m._id) ? 'Can create tickets' : 'Make ticket creator'}
+                      </button>
+                    ) : managers.includes(m._id) ? (
+                      <span className="chip bg-accent-soft text-accent"><Ticket size={12} /> Ticket creator</span>
+                    ) : null}
+                    {isOwner && (
+                      <button onClick={() => removeMember(m._id)} className="text-faint hover:text-red-500"><X size={16} /></button>
+                    )}
+                  </div>
+                )}
               </motion.div>
             ))}
           </div>

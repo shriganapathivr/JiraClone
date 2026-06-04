@@ -21,14 +21,14 @@ import { CardSkeleton } from '../components/ui/Skeleton.jsx';
 import { STATUSES } from '../lib/constants.js';
 import { useProjectData } from '../hooks/useProjectData.js';
 import { useProjectStore } from '../store/projectStore.js';
-import { useAuthStore } from '../store/authStore.js';
+import { usePermissions } from '../hooks/usePermissions.js';
 import { toast } from '../store/toastStore.js';
 import api from '../lib/api.js';
 
 export default function Board() {
   const { loaded } = useProjectData();
   const { issues, sprints, setIssues } = useProjectStore();
-  const isAdmin = useAuthStore((s) => s.user?.role === 'admin');
+  const { canManageIssues: isAdmin } = usePermissions();
   const [filters, setFilters] = useState({});
   const [activeId, setActiveId] = useState(null);
   const [createStatus, setCreateStatus] = useState(null);

@@ -14,6 +14,9 @@ const projectSchema = new mongoose.Schema(
     description: { type: String, default: '' },
     owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    // Members the admin has granted ticket-creation/assignment rights to.
+    // They can manage issues in this project but still can't create projects.
+    managers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     // Running counter so issues can auto-number per project (ZIRA-1, ZIRA-2...).
     issueCounter: { type: Number, default: 0 },
   },
