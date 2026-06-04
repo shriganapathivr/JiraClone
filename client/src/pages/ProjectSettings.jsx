@@ -36,7 +36,7 @@ export default function ProjectSettings() {
   }, []);
 
   async function onSave(e) {
-    e.preventDefault();
+    e?.preventDefault();
     setSaving(true);
     try {
       await api.put(`/projects/${current._id}`, {
@@ -89,7 +89,8 @@ export default function ProjectSettings() {
   return (
     <>
       <Topbar title="Project settings" />
-      <PageTransition className="mx-auto max-w-2xl space-y-5 p-6">
+      <PageTransition className="mx-auto max-w-5xl space-y-5 p-6">
+        <div className="grid items-start gap-5 lg:grid-cols-2">
         <form onSubmit={onSave} className="card space-y-4 p-5">
           <h3 className="font-display text-base font-semibold">Details</h3>
           <div>
@@ -141,7 +142,15 @@ export default function ProjectSettings() {
               </select>
             </div>
           )}
-          {isOwner && <p className="text-xs text-faint">Remember to Save changes above to persist members.</p>}
+          {isOwner && (
+            <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
+              <p className="text-xs text-faint">Save to persist member changes.</p>
+              <button onClick={onSave} className="btn-primary" disabled={saving}>
+                {saving ? <Spinner size={16} /> : <><Save size={16} /> Save changes</>}
+              </button>
+            </div>
+          )}
+        </div>
         </div>
 
         {isOwner && (
