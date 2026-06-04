@@ -119,6 +119,21 @@ JWT_SECRET=<a long random string>
 
 No code changes are required; Mongoose connects to Atlas exactly as it does locally.
 
+### Deploy to Render (one service)
+
+Zira runs as a **single Node service** — Express serves the built React app, the API, and the Socket.io chat from one URL — so it deploys to any Node host (Render, Railway, Fly.io). It is **not** suited to static-only hosts like Netlify/Vercel, because the live chat needs a persistent WebSocket server.
+
+Using the included [`render.yaml`](render.yaml):
+
+1. Create a free **MongoDB Atlas** cluster, add a DB user, allow network access from anywhere (`0.0.0.0/0`), and copy the connection string.
+2. On [Render](https://render.com): **New → Blueprint** → pick this repo. It reads `render.yaml` and sets:
+   - **Build:** `npm run install:all && npm run build`  ·  **Start:** `npm start`
+   - `NODE_ENV=production` and an auto-generated `JWT_SECRET`.
+3. Fill in the prompted env vars: **`MONGODB_URI`** (your Atlas string) and **`CLIENT_URL`** (your Render URL, e.g. `https://zira.onrender.com`).
+4. Deploy, then seed once from the service **Shell**: `npm run seed`.
+
+Same-origin in production means no CORS/proxy config is needed. (On Render's free tier the service sleeps when idle, so the first request after a pause is slow.)
+
 ## 📜 Scripts (root)
 
 | Script | Description |

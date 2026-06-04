@@ -1,0 +1,23 @@
+# Render blueprint — deploys Zira as a single Node web service that serves
+# the built React client, the API, and the Socket.io chat from one URL.
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: zira
+    runtime: node
+    plan: free
+    buildCommand: npm run install:all && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Auto-generated random secret for signing JWTs.
+      - key: JWT_SECRET
+        generateValue: true
+      # Paste your MongoDB Atlas connection string in the Render dashboard.
+      - key: MONGODB_URI
+        sync: false
+      # Set this to your deployed Render URL, e.g. https://zira.onrender.com
+      - key: CLIENT_URL
+        sync: false
