@@ -1,0 +1,25 @@
+name: Keep Render service awake
+
+# Render's free tier spins a web service down after ~15 min idle, causing a
+# slow cold start for the next visitor. This pings the health endpoint every
+# ~10 minutes so the service stays warm. Public repos get unlimited Actions
+# minutes, so this is free.
+#
+# NOTE: if your live URL is not https://zira.onrender.com, change SERVICE_URL
+# below (or set a repo variable named SERVICE_URL and it will be used instead).
+
+on:
+  schedule:
+    - cron: '*/10 * * * *' # every 10 minutes (UTC)
+  workflow_dispatch: {} # allows manual "Run workflow" from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /api/health
+        run: |
+          URL="${{ vars.SERVICE_URL || 'https://zira.onrender.com' }}"
+          echo "Pinging $URL/api/health"
+          # --max-time 90 covers a cold start; don't fail the job if it's waking.
+          curl -fsS --max-time 90 "$URL/api/health" || echo "Ping did not return OK (service may be waking up)."
